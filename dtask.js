@@ -17,7 +17,7 @@ define( function() {
      * core
      */
 
-    var Promise = function( consumer ) {
+    var Promise = function( resolver ) {
 
         var me = this;
 
@@ -33,7 +33,7 @@ define( function() {
 
         this._init();
         // call configure, giving a handler to resolve feed
-        consumer( resolveMe, notifyMe );
+        resolver( resolveMe, notifyMe );
     };
 
     Promise.prototype = {
@@ -166,10 +166,23 @@ define( function() {
             return promiseOrValue;
         }
 
+        if ( promiseOrValue.then && typeof promiseOrValue.then === 'function' ) {
+
+            return _assimilate( promiseOrValue );
+        }
+
         return new FulledPromise( promiseOrValue );
     };
 
-    var _adapt = function( promiseOrValue ) {
+    var _assimilate = function( x ) {
+
+        return promise( function( resolve, notify ) {
+
+            x.then(  resolve, undefined, notify );
+        });
+    };
+
+    var _cast = function( promiseOrValue ) {
 
         if ( promiseOrValue instanceof Promise ) {
 
@@ -266,7 +279,7 @@ define( function() {
 
                 for ( i = 0; i < toBeResolved; i++ ) {
 
-                    subPromise = _adapt( promiseOrValueArray[i] );
+                    subPromise = _cast( promiseOrValueArray[i] );
                     subPromise.then( mkFullfilledCall( i ) );
                 }
             });
@@ -281,9 +294,9 @@ define( function() {
 
             return promiseOrValueArray.reduce( function( prev, current, i ) {
 
-                return _adapt( prev ).then( function( prevValue ) {
+                return _cast( prev ).then( function( prevValue ) {
 
-                    return _adapt( current ).then( function( currentValue ) {
+                    return _cast( current ).then( function( currentValue ) {
 
                         return reduceFunc( prevValue, currentValue, i, total );
                     });
@@ -339,7 +352,7 @@ define( function() {
 
                 for ( i = 0; i < taskLength; i++ ) {
 
-                    subPromise = _adapt( promiseOrValueArray[i] );
+                    subPromise = _cast( promiseOrValueArray[i] );
                     subPromise.then( mkFullfilledCall( i ) );
                 }
             });

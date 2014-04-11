@@ -121,6 +121,11 @@ define( function() {
 
                 _this._when( resolve, notify, dumb, onProgress );
             });
+        },
+
+        done: function( end ) {
+
+            this._when( dumb, dumb, end, dumb );
         }
     };
 
@@ -154,10 +159,7 @@ define( function() {
      * helpers
      */
 
-    var dumb = function( x ) {
-
-        return x;
-    };
+    var dumb = function() {};
 
     var _constrain = function( promiseOrValue ) {
 
@@ -166,7 +168,7 @@ define( function() {
             return promiseOrValue;
         }
 
-        if ( promiseOrValue.then && typeof promiseOrValue.then === 'function' ) {
+        if ( promiseOrValue instanceof Object && promiseOrValue.then && typeof promiseOrValue.then === 'function' ) {
 
             return _assimilate( promiseOrValue );
         }
@@ -178,7 +180,9 @@ define( function() {
 
         return promise( function( resolve, notify ) {
 
-            x.then(  resolve, undefined, notify );
+            _nextTick( function() {
+                x.then(  resolve, undefined, notify );
+            });
         });
     };
 
